@@ -8,34 +8,51 @@ namespace FollowerNPC
 {
     public class aStar
     {
-        public aStar(GameLocation location)
+
+        #region Constructor & Members
+        public aStar(GameLocation location, string character)
         {
             gameLocation = location;
+            this.character = character;
         }
 
         public GameLocation gameLocation
         {
-            get { return gameLocation; }
+            get { return gl; }
             set
             {
-                gameLocation = value;
+                gl = value;
                 dimensions = new Vector2(gameLocation.map.Layers[0].LayerWidth, gameLocation.map.Layers[0].LayerHeight);
             }
         }
+        private GameLocation gl;
+        private string character;
         private Vector2 dimensions;
         private Vector2 negativeOne = new Vector2(-1, -1);
+        private int fullTile = Game1.tileSize;
+        private int halfTile = (int) (Game1.tileSize * 0.5f);
 
+        public Queue<Vector2> consolidatedPath;
+        public List<Node> fullPath;
+        #endregion
+
+        #region Public Methods
         public Queue<Vector2> Pathfind(Vector2 start, Vector2 goal)
         {
+            // Setup
             PriorityQueue open = new PriorityQueue(new Node(null, start));
             Dictionary<Vector2, float> closed = new Dictionary<Vector2, float>();
             Vector2 mapDimensions = new Vector2(100, 100);
             List<Node> path = new List<Node>();
 
+            // Cache
+            float maxH = mapDimensions.Length();
+
             while (open.Count != 0)
             {
                 Node q = open.Dequeue();
                 Node[] successors = GetSuccessors(q);
+                //ModEntry.monitor.Log("Q: " + q.position + ", (f,g,h): (" + q.f + "," + q.g + "," + q.h + ")");
                 foreach (Node successor in successors)
                 {
                     if (!(successor != null))
@@ -44,35 +61,53 @@ namespace FollowerNPC
                     if (successor.position == goal)
                     {
                         path = Reconstruct(successor);
+                        fullPath = path;
                         goto NodeConsolidation;
                     }
 
-                    successor.g = q.g + EuclideanDistanceSquared(q.position, successor.position);
-                    bool locationOpen = gameLocation.isTileLocationOpen(new Location((int)successor.position.X, (int)successor.position.Y));
+                    //if (!gl.isTileLocationTotallyClearAndPlaceable((int) successor.position.X,
+                    //    (int) successor.position.Y))
+                    //    continue;
+
+                    //if (!IsWalkableTile(successor.position))
+                    //    continue;
+
+                    successor.g = q.g + EuclideanDistance(q.position, successor.position);
+                    //bool locationOpen = gl.isTileLocationTotallyClearAndPlaceable(new Location((int)successor.position.X, (int)successor.position.Y));
+                    //bool locationOpen = IsWalkableTile(successor.position);
                     //ModEntry.monitor.Log("null check & goal check & g set & locationOpen set");
-                    successor.h = EuclideanDistanceSquared(successor.position, goal) + (locationOpen ? 0f : mapDimensions.LengthSquared());
+                    successor.h = EuclideanDistance(successor.position, goal);// + (locationOpen ? 0f : maxH);
                     successor.f = successor.g + successor.h;
 
                     if (open.CheckValue(successor.position) < successor.f)
-                        break;
+                        continue;
 
                     if (closed.TryGetValue(successor.position, out float closedNodeCost) && closedNodeCost < successor.f)
-                        break;
+                        continue;
 
+                    //ModEntry.monitor.Log("Successor: " + successor.position + ", (f,g,h): (" + successor.f + "," + successor.g + "," + successor.h + ")");
                     open.Enqueue(successor);
                 }
+
+                //Console.ReadLine();
             }
             return null;
             NodeConsolidation:
             Queue<Vector2> consolidatedPath = new Queue<Vector2>();
-            foreach (Node node in path)
+            //consolidatedPath.Enqueue(start);
+            for (int i = path.Count-2; i >=0; i--)
             {
-                if (IsCorner(node.position))
-                    consolidatedPath.Enqueue(node.position);
+                if (IsCorner(path[i].position))
+                    consolidatedPath.Enqueue(path[i].position);
             }
+            if (!IsCorner(goal))
+                consolidatedPath.Enqueue(goal);
+            this.consolidatedPath = consolidatedPath;
             return consolidatedPath;
         }
+        #endregion
 
+        #region Helper Methods
         private Vector2[] GetNeighbors(Vector2 tile)
         {
             float ppx = tile.X;
@@ -80,14 +115,23 @@ namespace FollowerNPC
             float mdx = dimensions.X;
             float mdy = dimensions.Y;
             Vector2[] successors = new Vector2[8];
-            successors[0] = ppy > 0 ? new Vector2(ppx, ppy - 1) : negativeOne;
-            successors[1] = ppy > 0 && ppx < mdx - 1 ? new Vector2(ppx + 1, ppy - 1) : negativeOne;
-            successors[2] = ppx < mdx - 1 ? new Vector2(ppx + 1, ppy) : negativeOne;
-            successors[3] = ppy < mdy - 1 && ppx < mdx - 1 ? new Vector2(ppx + 1, ppy + 1) : negativeOne;
-            successors[4] = ppy < mdy - 1 ? new Vector2(ppx, ppy + 1) : negativeOne;
-            successors[5] = ppy < mdy - 1 && ppx > 0 ? new Vector2(ppx - 1, ppy + 1) : negativeOne;
-            successors[6] = ppx > 0 ? new Vector2(ppx - 1, ppy) : negativeOne;
-            successors[7] = ppy > 0 && ppx > 0 ? new Vector2(ppx - 1, ppy - 1) : negativeOne;
+
+            successors[0] = IsWalkableTile(new Vector2(ppx, ppy - 1)) ? new Vector2(ppx, ppy - 1) : negativeOne;
+            successors[1] = IsWalkableTile(new Vector2(ppx + 1, ppy - 1)) ? new Vector2(ppx + 1, ppy - 1) : negativeOne;
+            successors[2] = IsWalkableTile(new Vector2(ppx + 1, ppy)) ? new Vector2(ppx + 1, ppy) : negativeOne;
+            successors[3] = IsWalkableTile(new Vector2(ppx + 1, ppy + 1)) ? new Vector2(ppx + 1, ppy + 1) : negativeOne;
+            successors[4] = IsWalkableTile(new Vector2(ppx, ppy + 1)) ? new Vector2(ppx, ppy + 1) : negativeOne;
+            successors[5] = IsWalkableTile(new Vector2(ppx - 1, ppy + 1)) ? new Vector2(ppx - 1, ppy + 1) : negativeOne;
+            successors[6] = IsWalkableTile(new Vector2(ppx - 1, ppy)) ? new Vector2(ppx - 1, ppy) : negativeOne;
+            successors[7] = IsWalkableTile(new Vector2(ppx - 1, ppy - 1)) ? new Vector2(ppx - 1, ppy - 1) : negativeOne;
+            //successors[0] = new Vector2(ppx, ppy - 1);
+            //successors[1] = new Vector2(ppx + 1, ppy - 1);
+            //successors[2] = new Vector2(ppx + 1, ppy);
+            //successors[3] = new Vector2(ppx + 1, ppy + 1);
+            //successors[4] = new Vector2(ppx, ppy + 1);
+            //successors[5] = new Vector2(ppx - 1, ppy + 1);
+            //successors[6] = new Vector2(ppx - 1, ppy);
+            //successors[7] = new Vector2(ppx - 1, ppy - 1);
             return successors;
         }
 
@@ -97,16 +141,65 @@ namespace FollowerNPC
             float ppy = parent.position.Y;
             float mdx = dimensions.X;
             float mdy = dimensions.Y;
-            Node[] successors = new Node[8];
-            successors[0] = ppy > 0 ? new Node(parent, new Vector2(ppx, ppy - 1)) : null;
-            successors[1] = ppy > 0 && ppx < mdx - 1 ? new Node(parent, new Vector2(ppx + 1, ppy - 1)) : null;
-            successors[2] = ppx < mdx - 1 ? new Node(parent, new Vector2(ppx + 1, ppy)) : null;
-            successors[3] = ppy < mdy - 1 && ppx < mdx - 1 ? new Node(parent, new Vector2(ppx + 1, ppy + 1)) : null;
-            successors[4] = ppy < mdy - 1 ? new Node(parent, new Vector2(ppx, ppy + 1)) : null;
-            successors[5] = ppy < mdy - 1 && ppx > 0 ? new Node(parent, new Vector2(ppx - 1, ppy + 1)) : null;
-            successors[6] = ppx > 0 ? new Node(parent, new Vector2(ppx - 1, ppy)) : null;
-            successors[7] = ppy > 0 && ppx > 0 ? new Node(parent, new Vector2(ppx - 1, ppy - 1)) : null;
+            Node[] successors = new Node[4];
+            //successors[0] = IsWalkableTile(new Vector2(ppx, ppy - 1)) ? new Node(parent, new Vector2(ppx, ppy - 1)) : null;
+            //successors[1] = IsWalkableTile(new Vector2(ppx + 1, ppy - 1)) ? new Node(parent, new Vector2(ppx + 1, ppy - 1)) : null;
+            //successors[2] = IsWalkableTile(new Vector2(ppx + 1, ppy)) ? new Node(parent, new Vector2(ppx + 1, ppy)) : null;
+            //successors[3] = IsWalkableTile(new Vector2(ppx + 1, ppy + 1)) ? new Node(parent, new Vector2(ppx + 1, ppy + 1)) : null;
+            //successors[4] = IsWalkableTile(new Vector2(ppx, ppy + 1)) ? new Node(parent, new Vector2(ppx, ppy + 1)) : null;
+            //successors[5] = IsWalkableTile(new Vector2(ppx - 1, ppy + 1)) ? new Node(parent, new Vector2(ppx - 1, ppy + 1)) : null;
+            //successors[6] = IsWalkableTile(new Vector2(ppx - 1, ppy)) ? new Node(parent, new Vector2(ppx - 1, ppy)) : null;
+            //successors[7] = IsWalkableTile(new Vector2(ppx - 1, ppy - 1)) ? new Node(parent, new Vector2(ppx - 1, ppy - 1)) : null;
+            successors[0] = IsWalkableTile(new Vector2(ppx, ppy - 1)) ? new Node(parent, new Vector2(ppx, ppy - 1)) : null;
+            successors[1] = IsWalkableTile(new Vector2(ppx + 1, ppy)) ? new Node(parent, new Vector2(ppx + 1, ppy)) : null;
+            successors[2] = IsWalkableTile(new Vector2(ppx, ppy + 1)) ? new Node(parent, new Vector2(ppx, ppy + 1)) : null;
+            successors[3] = IsWalkableTile(new Vector2(ppx - 1, ppy)) ? new Node(parent, new Vector2(ppx - 1, ppy)) : null;
             return successors;
+        }
+
+        public bool IsWalkableTile(Vector2 tile)
+        {
+            //Location l = new Location((int) (tile.X * fullTile) - halfTile, (int) (tile.Y * fullTile) + halfTile);
+            //gl.map.GetLayer("Buildings").PickTile(l, Game1.viewport.Size);
+            //gl.isObjectAtTile(l.X, l.Y);
+            //gl.isTerrainFeatureAt(l.X, l.Y);
+            //bool x = tile.X > 0 && tile.X <= dimensions.X;
+            //bool y = tile.Y > 0 && tile.Y <= dimensions.Y;
+            //IsTileOccupied?
+
+            //IsTilePassable?
+            //bool passable = gl.isTilePassable(new Location((int) tile.X, (int) tile.Y), Game1.viewport);
+
+            //IsTilePlaceable?
+            //bool placeable = gl.isTileLocationTotallyClearAndPlaceable(tile);
+
+            //Objects seems to be placeable objects that aren't "furniture"
+            // Layers: Back, Buildings, Paths, Front, AlwaysFront
+
+            return gl.isTileOnMap(tile) && !gl.isTileOccupied(tile, character) &&
+                       gl.isTilePassable(new Location((int) tile.X, (int) tile.Y), Game1.viewport) &&
+                       gl.isTilePlaceable(tile, null) && !(gl.getObjectAtTile((int)tile.X,(int)tile.Y) != null);
+
+            // If:
+            // It isn't a terrain feature
+            // It isn't water
+            // It isn't out of the map
+            // It isn't occupied by an object (that isn't passable)
+            // It isn't occupied by a building
+            // It isn't occupied by a terrain feature or large terrain feature
+
+            //return passable && placeable;
+        }
+
+        private int NodeArrayCount(Node[] a)
+        {
+            int count = 0;
+            for (int i = 0; i < a.Length; i++)
+            {
+                if (a[i] != null)
+                    count++;
+            }
+            return count;
         }
 
         private List<Node> Reconstruct(Node goal)
@@ -125,17 +218,16 @@ namespace FollowerNPC
         private bool IsCorner(Vector2 tile)
         {
             Vector2[] neighbors = GetNeighbors(tile);
-            bool[] cornersOccupied = new bool[4] {false, false, false, false};
             for (int i = 1; i < 8; i+=2)
             {
-                Location loc = new Location((int) (neighbors[i].X * Game1.tileSize), (int) (neighbors[i].Y * Game1.tileSize));
-                if (!gameLocation.isTileLocationOpen(loc) && neighbors[i] != negativeOne)
+                //Location loc = new Location((int) (neighbors[i].X * Game1.tileSize), (int) (neighbors[i].Y * Game1.tileSize));
+                if (neighbors[i] == negativeOne)
                 {
-                    Location n1 = new Location((int)(neighbors[i-1].X * Game1.tileSize), (int)(neighbors[i-1].Y * Game1.tileSize));
-                    Location n2 = new Location((int) (neighbors[i + 1 > 7 ? 0 : i + 1].X * Game1.tileSize),
-                        (int) (neighbors[i + 1 > 7 ? 0 : i + 1].Y * Game1.tileSize));
-                    if ((gameLocation.isTileLocationOpen(n1) && neighbors[i - 1] != negativeOne) &&
-                        (gameLocation.isTileLocationOpen(n2) && neighbors[i + 1 > 7 ? 0 : i + 1] != negativeOne))
+                    //Location n1 = new Location((int)(neighbors[i-1].X * Game1.tileSize), (int)(neighbors[i-1].Y * Game1.tileSize));
+                    //Location n2 = new Location((int) (neighbors[i + 1 > 7 ? 0 : i + 1].X * Game1.tileSize),
+                        //(int) (neighbors[i + 1 > 7 ? 0 : i + 1].Y * Game1.tileSize));
+                    if ((neighbors[i - 1] != negativeOne) &&
+                        (neighbors[i + 1 > 7 ? 0 : i + 1] != negativeOne))
                     {
                         return true;
                     }
@@ -149,13 +241,15 @@ namespace FollowerNPC
             return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
         }
 
-        private float EuclideanDistanceSquared(Vector2 a, Vector2 b)
+        private float EuclideanDistance(Vector2 a, Vector2 b)
         {
-            return ((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y));
+            return (a - b).Length();
+            //return (float)Math.Sqrt(((a.X - b.X) * (a.X - b.X)) + ((a.Y - b.Y) * (a.Y - b.Y)));
         }
+        #endregion
     }
 
-    class Node
+    public class Node
     {
         public Node parent;
         public Vector2 position;
