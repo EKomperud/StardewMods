@@ -11,13 +11,13 @@ Wed || Sun
 Wed6:
 	"I'm getting the itch for an adventure.
 	#$q 500/501 abigailCompanion_followup#Hey @, wanna tag team for a little bit?
-		#$r 500 20 abigailCompanion_yes#You read my mind like a crystal ball. Let's find some trouble!
+		#$r 500 20 abigailCompanion_yes#Sure! You feel like getting into trouble?
 		#$r 501 0 abigailCompanion_no#Hmmmm, probably not today. Don't count me out next time though.",
-		abigailCompanion_yes: "Awesome! Good thing I brought my sword today!$h",
+		abigailCompanion_yes: "You read my mind! Where should we go first?.$h",
 		abigailCompanion_no: "Boo. Guess I'll need to find some fun with someone else today.",
 		abigailCompanion_followup:
 			"$p 500
-				#It's a good thing I have you to help me scratch it!$h
+				#It's a good thing I have you with me!$h
 				|Maybe I could convince Sebastian to come with me?",
 
 
@@ -37,7 +37,7 @@ Sat6:
 		#$r 525 10 alexCompanion_yes#How about you hang out with me today?
 		#$r 526 5 alexCompanion_no#How about you read that book for a change?",
 		alexCompanion_yes: "Good idea! We'll be the ultimate team here in Pelican town!",
-		alexCompanion_yes: "I suppose I really should stop procrastinating!"
+		alexCompanion_no: "I suppose I really should stop procrastinating!"
 		alexCompanion_followup: "$p 525
 			#Which means I'll have no problem running around or fighting monsters!
 			|But I did pick up a book on workout physiology the other day!",
@@ -74,8 +74,8 @@ Sun
 		I knew I could count on you for a good time! Lead the way.
 		No worries. I'm off on Sundays so let me know if you're free next week!
 Sun6:
-	"$q 575/576 emilyCompanion_followup#Hey @, I've got a little free time today! Want to go find an adventure?
-		#$r 575 10 emilyCompanion_yes#Absolutely! I had some cool things in mind that I wanted to show you too!
+	"$q 575/576 emilyCompanion_followup#Hey @, I've got a little free time today! Want to go find something fun to do?
+		#$r 575 10 emilyCompanion_yes#Absolutely! I have some cool things to show you too!
 		#$r 576 0 I'm sorry, but today's actually bad for me. Rain check for next time?",
 		emilyCompanion_yes: "I knew I could count on you for a good time! Lead the way.",
 		emilyCompanion_no: "No worries. I'm off on Sundays so let me know if you're free next week!",
@@ -95,8 +95,8 @@ Wed || Thu || Fri || Sat || Sun
 		*Sigh* Alright... Promise me next time then.
 Fri8:
 	"$q 600/601 haleyCompanion_followup#Hey @! Wanna help me with some photography around Pelican town today?
-		#$r 600 10 haleyCompanion_yes#Sure, let's find some cool wildlife! Make sure to take some good ones of me too.
-		#$r 601 -5 haleyCompanion_no#I have some errands of my own to run today. Send me some copies though!",
+		#$r 600 10 haleyCompanion_yes#Sure! Make sure to take some good ones of me.
+		#$r 601 -5 haleyCompanion_no#Not today. Sorry Haley.",
 		haleyCompanion_yes: "I didn't know it was possible to get a bad one of you.",
 		haleyCompanion_no: "*Sigh* Alright... Promise me next time then.",
 		haleyCompanion_followup: "#p 600
@@ -114,8 +114,7 @@ Sat
 		That sounds fun! Just don't run too fast.
 		That's not a bad idea. I'm terrible at following good advice though!
 Sat8:
-	"Hmmmm. 
-	#$q 625/626 harveyCompanion_followup#I was wondering if I should do anything special with my day off today.
+	"#$q 625/626 harveyCompanion_followup#Hmmmm. I'm wondering if I should do anything special with my day off today.
 		#$r 625 10 harveyCompanion_yes#How about we check out the valley together today?
 		#$r 626 5 harveyCompanion_no#Why don't you go check out some of the valley",
 		harveyCompanion_yes: "That sounds fun! Just don't run too fast.",
@@ -140,8 +139,8 @@ Wed || Thu || Sun
 		Oh well, I'm not much of a fighter or else I'd join you.
 Thu6:
 	"$q 650/651 leahCompanion_followup#Hey @! I was just thinking about going for a walk around the valley. Where are you headed?
-		#$r 650 15 leahCompanion_yes#I was planning on walking around a bit too. You feel like coming with?
-		#$r 651 0 leahCompanion_errands#I have a few errands I need to get donen today unfortunately.
+		#$r 650 15 leahCompanion_yes#Walking around a bit too. You feel like coming with?
+		#$r 651 0 leahCompanion_errands#I have a few errands I need to get done today.
 		#$r 651 0 leahCompanion_boring#Eh, nowhere too interesting I think.
 		#$r 651 0 leahCompanion_danger#Somewhere dangerous today I think. The mines maybe?",
 		leahCompanion_yes: "Sounds like we both want the same things in life! Let's go.",
@@ -149,7 +148,7 @@ Thu6:
 		leahCompanion_boring: "I doubt that. You should try to find interesting things wherever you are!",
 		leahCompanion_danger: "Oh well, I'm not much of a fighter or else I'd join you.",
 		leahCompanion_followup: "#p 650
-			#Now all we need is a bottle of wine to top this day off!
+			#All we need is a bottle of wine to top this day off!
 			|I find good forage year-round so there's always a reason to take a walk!",
 
 
@@ -167,15 +166,15 @@ Wed || Fri || Sun
 		I get it. I'll leave you to your self then.
 Wed6:
 	"$q 675/676 maruCompanion_followup#Say @, I think I need to clear my head of a project I'm working on. Do you mind if I walk with you?
-		#$r 675 10 maruCompanion_talk#Of course not! What's been on your mind recently?
+		#$r 675 10 maruCompanion_talk#Of course not! What's been on your mind lately?
 		#$r 675 10 maruCompanion_constellations#Not at all! And I hear it's supposed to be clear out tonight too.
-		#$r 676 0 maruCompanion_no#Sorry Maru, I'm trying to clear my own with some time alone right now.",
+		#$r 676 0 maruCompanion_no#Sorry Maru, I'm trying to clear my own with some alone time right now.",
 		maruCompanion_talk: "I was actually thinking a lot about %noun recently. Have you heard that...?",
 		maruCompanion_constellations: "Wonderful! There's always something so nice about looking for constellations with someone else.",
 		maruCompanion_no: "I get it. I'll leave you to your self then.",
 		maruCompanion_followup: "#p 675
 			#...! That's' so interesting @! You should take a look at my books sometime. I have one about just that!
-			|Make sure you're getting a healthy balance of both work and relaxation.",
+			|You should make sure you're getting a healthy balance of both work and relaxation too.",
 
 Penny:
 Mon || Thu || Sun
@@ -189,13 +188,13 @@ Mon || Thu || Sun
 		Oh. Well ok then. See you another time.
 Mon8:
 	"$q 700/701 pennyCompanion_followup#Hey @, you're out and about right now. Do you think you could use come company?
-		#$r 700 20 pennyCompanion_yes#Yeah, that really nice. Want to walk with me?
+		#$r 700 20 pennyCompanion_yes#Yeah, that sounds nice. Want to walk with me?
 		#$r 701 -5 pennyCompanion_no#Sorry Penny. Not right now I think.",
-		pennyCompanion_yes: "Yes! That sounds quite lovely. Where are we headed today?",
+		pennyCompanion_yes: "Yes! That sounds lovely. Where are we headed today?",
 		pennyCompanion_no: "Oh. Well ok then. See you another time.",
 		pennyCompanion_followup: "#p 700
 			#You smell very nice today. I guess I just love the smell of a farmer at work.
-			|The museum is a nice place to talk if you ever want to stop by and say 'hi'.",
+			|The museum is a nice place to relax if you ever want to stop by and talk.",
 
 Sam:
 Tue || Thu || Sun
@@ -224,7 +223,7 @@ Tue6:
 Sebastian:
 Tue || Wed || Sun
 	Question:
-		*Sigh* I think I should to take a break from programming for a little bit. What are you up to today?
+		*Sigh* I think I should take a break from programming for a little bit. What are you up to today?
 	Responses:
 		I could be hanging out with you if you wanted.
 		Just enjoying some time off myself. Want to join me?
@@ -236,7 +235,7 @@ Tue || Wed || Sun
 		Mmmm. Sounds stressful. I think I'll just play some games.
 		Hey, I get it. Don't be a stranger @!
 Tue8:
-	"$q 750/751 sebastianCompanion_followup#*Sigh* I think I should to take a break from programming for a little bit. What are you up to today?
+	"$q 750/751 sebastianCompanion_followup#*Sigh* I think I should take a break from programming for a little bit. What are you up to today?
 		#$r 750 15 sebastianCompanion_yes#I could be hanging out with you if you wanted.
 		#$r 750 15 sebastianCompanion_casual#Just enjoying some time off myself. Want to join me?
 		#$r 751 0 sebastianCompanion_errands#Running errands around town. Nothing too interesting.
@@ -261,7 +260,7 @@ Sun
 		I don't know. I was kind of hoping you had some ideas haha!
 		I understand completely. Come say 'hi' if you ever want someone to chat with.
 Sun8:
-	"$q  775/776 shaneCompanion_followup#Hey @. I was reading that going for nature walks is good for mental health. What do you say we take a stroll?
+	"$q 775/776 shaneCompanion_followup#Hey @. I was reading that going for nature walks is good for mental health. What do you say we take a stroll?
 		#$r 775 15 shaneCompanion_yes#Yeah, I've heard that too. Where do you want to go?
 		#$r 776 5 shaneCompanion_tired#Sorry Shane, I'm a bit too tired to entertain company right now.
 		#$r 776 0 shaneCompanion_no#Not today Shane. Sorry.",
