@@ -171,6 +171,27 @@ namespace FollowerNPC
                     return true;
                 }
             }
+
+            AnimalHouse ah = gameLocation as AnimalHouse;
+            if (ah != null)
+            {
+                foreach (FarmAnimal animal in ah.animals.Values)
+                {
+                    if (animal.GetBoundingBox().Intersects(tileLocationRect))
+                        return true;
+                }
+            }
+
+            Farm f = gameLocation as Farm;
+            if (f != null)
+            {
+                foreach (FarmAnimal animal in f.animals.Values)
+                {
+                    if (animal.GetBoundingBox().Intersects(tileLocationRect))
+                        return true;
+                }
+            }
+
             if (gameLocation.terrainFeatures.ContainsKey(tileLocation) && tileLocationRect.Intersects(gameLocation.terrainFeatures[tileLocation].getBoundingBox(tileLocation)) && !gameLocation.terrainFeatures[tileLocation].isPassable(null))
             {
                 return true;

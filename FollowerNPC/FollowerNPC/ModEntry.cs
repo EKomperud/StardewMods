@@ -67,10 +67,14 @@ namespace FollowerNPC
                 Game1.getCharacterFromName("Penny");
             }
 
-            //else if (e.KeyPressed == Microsoft.Xna.Framework.Input.Keys.K)
-            //{
-            //    Game1.getCharacterFromName("Penny").faceDirection(direction);
-            //}
+            else if (e.KeyPressed == Microsoft.Xna.Framework.Input.Keys.K)
+            {
+                GameLocation gl = companionsManager.farmer.currentLocation;
+                foreach (Character c in gl.characters)
+                {
+                    monitor.Log(c.Name);
+                }
+            }
 
             //else if (e.KeyPressed == Keys.U && spawned)
             //{
