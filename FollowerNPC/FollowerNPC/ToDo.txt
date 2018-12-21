@@ -1,8 +1,25 @@
-﻿Perks || Buffs
-Events
+﻿Events
 Prevent some NPC's from entering certain areas
+Add action/reaction dialogue
+Bathhouse Gender stuff
+Fix diagonal walking animation glitches
+Allow Companions to walk through farm animals, or path around them.
+Spouse dismissal
 
 Optimize A*
 Optimize helper functions
 
-Organize Event functions into helpers
+Balance Companion Perks & Buffs
+Companion Buffs:
+	Abigail:	Speed +1. Attack +10% (farmer.attackIncreaseModifier). Luck +1		Assists you in combat?
+	Alex:		Attack +20%. 100% Warrior Ring										Assists you in combat?
+	Elliott:	Fishing +3															
+	Emily:		Mining +1. 100% Yoba Ring after damage								Replicates "Gemologist" perk, but 100%?
+	Haley:		Luck +3																
+	Harvey:		Defense +10. Gradual healing when below 75%							Buffed healing + 1 lifeline?
+	Leah:		Foraging +3															Forages Iridium quality items occasionally?
+	Maru:		Increase any 1 skill by 1, interchangeable							Buffed to +2?
+	Penny:		Farming +3															Makes kids friendly quicker?
+	Sam:		Speed +2
+	Sebastian:	Copies Abigail.														Ride his motorcycle?
+	Shane:		Farming +3.															Chickens follow you?
