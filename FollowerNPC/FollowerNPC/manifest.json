@@ -1,10 +1,10 @@
 {
-  "Name": "FollowerNPC",
+  "Name": "Companion NPCs",
   "Author": "Redwood",
-  "Version": "1.0.0",
-  "Description": "Get a follower",
-  "UniqueID": "Redwood.FollowerNPC",
+  "Version": "0.0.1",
+  "Description": "Recruit Companions to travel alongside you.",
+  "UniqueID": "Redwood.CompanionNPCs",
   "EntryDll": "FollowerNPC.dll",
-  "MinimumApiVersion": "2.6",
-  "UpdateKeys": []
+  "MinimumApiVersion": "2.9.3",
+  "UpdateKeys": [ "Nexus:3175" ]
 }

@@ -49,32 +49,42 @@ namespace FollowerNPC
             //**********************//
 
             // Subscribe to events //
-            ControlEvents.KeyReleased += ControlEvents_KeyReleased;
+            Helper.Events.Input.ButtonReleased += Input_ButtonReleased;
             //**********************//
         }
+
+
         #endregion
 
         #region Event Functions
 
         // Just used for debug commands
-        private void ControlEvents_KeyReleased(object sender, EventArgsKeyPressed e)
+        private void Input_ButtonReleased(object sender, ButtonReleasedEventArgs e)
         {
             if (!Context.IsWorldReady)
                 return;
 
-            if (e.KeyPressed == Microsoft.Xna.Framework.Input.Keys.L)
-            {
-                Game1.getCharacterFromName("Penny");
-            }
+            //if (e.Button == Microsoft.Xna.Framework.Input.Keys.P.ToSButton())
+            //{
+            //    GameLocation l = Game1.getLocationFromName("HaleyHouse");
+            //    Point p = l.getWarpPointTo("HaleyHouse");
+            //    l.
+            //    Game1.warpFarmer("HaleyHouse", p.X, p.Y, 0);
+            //}
 
-            else if (e.KeyPressed == Microsoft.Xna.Framework.Input.Keys.K)
-            {
-                GameLocation gl = companionsManager.farmer.currentLocation;
-                foreach (Character c in gl.characters)
-                {
-                    monitor.Log(c.Name);
-                }
-            }
+            //if (e.Button == Microsoft.Xna.Framework.Input.Keys.L.ToSButton())
+            //{
+            //    Game1.getCharacterFromName("Penny");
+            //}
+
+            //else if (e.Button == Microsoft.Xna.Framework.Input.Keys.K.ToSButton())
+            //{
+            //    GameLocation gl = companionsManager.farmer.currentLocation;
+            //    foreach (Character c in gl.characters)
+            //    {
+            //        monitor.Log(c.Name);
+            //    }
+            //}
 
             //else if (e.KeyPressed == Keys.U && spawned)
             //{
@@ -85,9 +95,7 @@ namespace FollowerNPC
             //{
             //    monitor.Log(farmer?.currentLocation.Name + " : " + farmer?.getTileLocation());
             //}
-
         }
-
 
         //private void MenuEvents_MenuClosed(object sender, EventArgsClickableMenuClosed e)
         //{

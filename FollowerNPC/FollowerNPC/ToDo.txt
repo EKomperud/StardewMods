@@ -4,6 +4,7 @@ More Perks?
 Prevent some NPC's from entering certain areas
 Add action/reaction dialogue
 Add more location dialogue
+Add spouse dialogue
 Bathhouse Gender stuff								- Dependent on "Prevent some NPC's from entering..."
 Fix diagonal walking animation glitches				- Will need to work work on AI behavior for this
 Spouse dismissal bug-fixing							- Kinda fixed, but still needs more testing.
