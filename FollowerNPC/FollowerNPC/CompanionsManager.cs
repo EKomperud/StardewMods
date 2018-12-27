@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using StardewValley;
+using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -43,6 +44,8 @@ namespace FollowerNPC
         public int companionFacingDirection;
         public int companionHeartThreshold;
         public float companionFollowThreshold;
+        public float companionDecelerateThreshold;
+        public float companionCurrentMovespeed;
         // ******************** //
 
         // Companion Movement Memory //
@@ -80,6 +83,7 @@ namespace FollowerNPC
         public Dictionary<string, CompanionDialogueInfo> companionDialogueInfos;
         public Dictionary<string, bool> currentCompanionVisitedLocations;
         public Dictionary<string, CompanionionshipState> companionStates;
+        public Stack<Dialogue> combatWithheldDialogue;
         // ************** //
 
         // Farmer Objects //
@@ -99,10 +103,12 @@ namespace FollowerNPC
             SetNPCCompanionDays();
             InitializeNPCsThatCanHangOut();
             companionDialogueInfos = new Dictionary<string, CompanionDialogueInfo>();
+            combatWithheldDialogue = new Stack<Dialogue>();
             // ************************* //
 
             // Define Companion Parameters //
-            companionFollowThreshold = 2f;
+            companionFollowThreshold = 2.25f * Game1.tileSize;
+            companionDecelerateThreshold = 1.75f * Game1.tileSize;
             companionPathingNodeGoalTolerance = 5f;
             companionHeartThreshold = ModEntry.config.heartThreshold;
             // *************************** //
@@ -114,9 +120,11 @@ namespace FollowerNPC
             ModEntry.modHelper.Events.Display.MenuChanged += Display_MenuChanged;
             ModEntry.modHelper.Events.GameLoop.TimeChanged += GameLoop_TimeChanged;
             ModEntry.modHelper.Events.GameLoop.DayStarted += GameLoop_DayStarted;
+            ModEntry.modHelper.Events.GameLoop.DayEnding += GameLoop_DayEnding;
             ModEntry.modHelper.Events.World.DebrisListChanged += World_DebrisListChanged;
             ModEntry.modHelper.Events.World.ObjectListChanged += World_ObjectListChanged;
             ModEntry.modHelper.Events.World.TerrainFeatureListChanged += World_TerrainFeatureListChanged;
+            ModEntry.modHelper.Events.World.NpcListChanged += World_NpcListChanged;
         }
 
         #region Helpers
@@ -179,21 +187,22 @@ namespace FollowerNPC
                     // If this dialogue's speaker isn't null...
                     Dialogue d = (Dialogue)typeof(DialogueBox).GetField("characterDialogue", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(db);
                     if (d != null && 
-                        d.speaker != null && 
+                        d.speaker != null &&
+                        companionStates.TryGetValue(d.speaker.Name, out CompanionionshipState cs) &&
                         d.speaker.CurrentDialogue.Count == 0 &&
                         farmer.getFriendshipHeartLevelForNPC(d.speaker.Name) >= companionHeartThreshold)
                     {
                         NPC n = d.speaker;
 
                         // Check to see if we should push a Companion Recruit Dialogue
-                        if (companionStates[n.Name] == CompanionionshipState.available &&
+                        if (cs == CompanionionshipState.available &&
                             npcsThatCanBeRecruitedToday.TryGetValue(n.Name, out bool available) && available)
                         {
                             TryPushCompanionRecruitDialogue(n.Name);
                         }
 
                         // Check to see if this was a response to a Companion Recruit Dialogue
-                        else if (companionStates[n.Name] == CompanionionshipState.recruitDialoguePushed &&
+                        else if (cs == CompanionionshipState.recruitDialoguePushed &&
                                  companionDialogueInfos.TryGetValue(n.Name, out CompanionDialogueInfo cdi) &&
                                  d.Equals(cdi.recruitDialogue))
                         {
@@ -201,7 +210,7 @@ namespace FollowerNPC
                         }
 
                         // Check to see if this was a Companion Recruit Followup Dialogue
-                        else if (companionStates[n.Name] == CompanionionshipState.recruitFollowupDialoguePushed &&
+                        else if (cs == CompanionionshipState.recruitFollowupDialoguePushed &&
                                  companionDialogueInfos.TryGetValue(n.Name, out cdi) &&
                                  d.Equals(cdi.recruitDialogue))
                         {
@@ -248,6 +257,14 @@ namespace FollowerNPC
             ResetNPCsThatCanHangOut();
         }
 
+        private void GameLoop_DayEnding(object sender, DayEndingEventArgs e)
+        {
+            if (!(companion != null) || !(farmer != null))
+                return;
+
+            EndOfDayDismissCompanion();
+        }
+
         private void World_DebrisListChanged(object sender, DebrisListChangedEventArgs e)
         {
             if (!Context.IsWorldReady || !(companion != null) || !(farmer != null))
@@ -270,6 +287,15 @@ namespace FollowerNPC
                 return;
 
             PathfindingRemakeCheck();
+        }
+
+        private void World_NpcListChanged(object sender, NpcListChangedEventArgs e)
+        {
+            if (!Context.IsWorldReady || !(companion != null) || !(farmer != null))
+                return;
+
+            CheckForSwarmRoomLadderSpawn(e);
+            CheckForCombatWithheldDialogue(e);
         }
 
         #endregion
@@ -335,7 +361,8 @@ namespace FollowerNPC
             
             Vector2 diff = new Vector2(f.X, f.Y) - new Vector2(c.X, c.Y);
             float diffLen = diff.Length();
-            if (diffLen > Game1.tileSize * companionFollowThreshold && companionPathCurrentNode != negativeOne)
+            companionCurrentMovespeed = GetMovementSpeedBasedOnDistance(diffLen);
+            if (companionCurrentMovespeed > 0 && companionPathCurrentNode != negativeOne)
             {
                 Point n = new Point(((int)companionPathCurrentNode.X * fullTile) + halfTile, ((int)companionPathCurrentNode.Y * fullTile) + halfTile);
                 Vector2 nodeDiff = new Vector2(n.X, n.Y) - new Vector2(c.X, c.Y);
@@ -344,12 +371,12 @@ namespace FollowerNPC
                     return;
                 nodeDiff /= nodeDiffLen;
 
-                companion.xVelocity = nodeDiff.X * farmer.getMovementSpeed();
-                companion.yVelocity = -nodeDiff.Y * farmer.getMovementSpeed();
+                companion.xVelocity = nodeDiff.X * companionCurrentMovespeed;
+                companion.yVelocity = -nodeDiff.Y * companionCurrentMovespeed;
                 if (companion.xVelocity != 0 && companion.yVelocity != 0)
                 {
-                    companion.xVelocity *= 1.26f;
-                    companion.yVelocity *= 1.26f;
+                    companion.xVelocity *= 1.2645f;
+                    companion.yVelocity *= 1.2645f;
                 }
                 HandleWallSliding();
                 companionLastFrameVelocity = new Vector2(companion.xVelocity, companion.yVelocity);
@@ -368,6 +395,19 @@ namespace FollowerNPC
                 companion.Sprite.faceDirectionStandard(GetFacingDirectionFromMovement(new Vector2(companionLastMovementDirection.X, -companionLastMovementDirection.Y)));
                 companionMovedLastFrame = false;
             }
+        }
+
+        private float GetMovementSpeedBasedOnDistance(float distanceFromFarmer)
+        {
+            if (distanceFromFarmer > companionFollowThreshold)
+            {
+                return farmer.getMovementSpeed();
+            }
+            else if (distanceFromFarmer > companionDecelerateThreshold)
+            {
+                return companionCurrentMovespeed - 0.075f;
+            }
+            return 0;
         }
 
         /// <summary>
@@ -599,9 +639,9 @@ namespace FollowerNPC
         /// </summary>
         private void TryPushCompanionRecruitDialogue(string name)
         {
-            NPC n = Game1.getCharacterFromName(name);
             if (!(companion != null))
             {
+                NPC n = Game1.getCharacterFromName(name);
                 if (!companionDialogueInfos.TryGetValue(name, out CompanionDialogueInfo cdi))
                 {
                     companionDialogueInfos[name] = GenerateCompanionDialogueInfo(name);
@@ -652,7 +692,7 @@ namespace FollowerNPC
         /// </summary>
         private void TryPushCompanionActionDialogue()
         {
-            if (companion != null && companion.CurrentDialogue.Count == 0)
+            if (companion != null && companion.CurrentDialogue.Count == 0 && combatWithheldDialogue.Count == 0)
             {
                 bool hbk = (bool)typeof(NPC).GetField("hasBeenKissedToday", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(companion);
                 if (farmer.spouse.Equals(companion.Name) && farmer.getFriendshipHeartLevelForNPC(companion.Name) > 9 && !hbk)
@@ -712,7 +752,6 @@ namespace FollowerNPC
         /// <summary>
         /// Handles all the cleanup for a Companion Dismissal
         /// </summary>
-        /// <param name="name"></param>
         private void DismissCompanion(string name)
         {
             companionAStar = null;
@@ -739,19 +778,90 @@ namespace FollowerNPC
         }
 
         /// <summary>
+        /// Dismisses a companion without resetting their schedule.
+        /// </summary>
+        private void EndOfDayDismissCompanion()
+        {
+            companionAStar = null;
+            companionBuff.RemoveAndDisposeCompanionBuff();
+            companionBuff = null;
+            companion.faceTowardFarmerTimer = 0;
+            companionStates[companion.Name] = CompanionionshipState.dismissed;
+            companion = null;
+            Patches.companion = null;
+        }
+
+        /// <summary>
         /// Sets the companion dialogue for the current location.
         /// </summary>
         private void handleCompanionLocationSpecificDialogue()
         {
-            string dialogueKey = "companion" + farmer.currentLocation.Name;
-            string dialogueValue;
-            if (companion.Dialogue.TryGetValue(dialogueKey, out dialogueValue) && !currentCompanionVisitedLocations.TryGetValue(dialogueKey, out bool v))
+            MineShaft ms = companion.currentLocation as MineShaft;
+            // If this is a mineshaft and there are enemies, remove current dialogue
+            if (ms != null && ms.characters.Count > 1)
             {
-                while (companion.CurrentDialogue.Count != 0)
-                    companion.CurrentDialogue.Pop();
-                companion.CurrentDialogue.Push(new Dialogue(dialogueValue, companion));
-                currentCompanionVisitedLocations[dialogueKey] = true;
+                if (companion.CurrentDialogue.Count != 0)
+                {
+                    while (companion.CurrentDialogue.Count != 0)
+                        combatWithheldDialogue.Push(companion.CurrentDialogue.Pop());
+                }
             }
+            // Otherwise,
+            else
+            {
+                // Re-push combat withheld dialgoue if there is some
+                if (combatWithheldDialogue.Count > 0)
+                {
+                    while (combatWithheldDialogue.Count > 0)
+                        companion.CurrentDialogue.Push(combatWithheldDialogue.Pop());
+                }
+                // or push this location's unique dialogue
+                else
+                {
+                    string dialogueKey = "companion" + farmer.currentLocation.Name;
+                    string dialogueValue;
+                    if (companion.Dialogue.TryGetValue(dialogueKey, out dialogueValue) && !currentCompanionVisitedLocations.TryGetValue(dialogueKey, out bool v))
+                    {
+                        while (companion.CurrentDialogue.Count != 0)
+                            companion.CurrentDialogue.Pop();
+                        companion.CurrentDialogue.Push(new Dialogue(dialogueValue, companion));
+                        currentCompanionVisitedLocations[dialogueKey] = true;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Check to see if the companion's dialogue needs to be withheld for combat,
+        /// and withhold it if so.
+        /// </summary>
+        private void CheckForCombatWithheldDialogue(NpcListChangedEventArgs e)
+        {
+            MineShaft ms = e.Location as MineShaft;
+            if (combatWithheldDialogue.Count > 0 && ms != null && e.Removed != null && e.Removed.Count() > 0)
+            {
+                NPC r = e.Removed.First();
+                StardewValley.Monsters.Monster m = r as StardewValley.Monsters.Monster;
+                if (m != null && !CheckForMonstersInThisLocation(ms))
+                {
+                    while (combatWithheldDialogue.Count > 0)
+                        companion.CurrentDialogue.Push(combatWithheldDialogue.Pop());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns true if the farmer is in the mines, and there are any monsters on their floor
+        /// </summary>
+        private bool CheckForMonstersInThisLocation(GameLocation l)
+        {
+            foreach (NPC n in l.characters)
+            {
+                StardewValley.Monsters.Monster m = n as StardewValley.Monsters.Monster;
+                if (m != null)
+                    return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -1173,6 +1283,44 @@ namespace FollowerNPC
                 facingDirection = Convert.ToInt32(split[3]);
             }
             return false;
+        }
+        
+
+        /// <summary>
+        /// Checks if you are in a swarm room, and spawns a ladder when appropriate if so
+        /// </summary>
+        private void CheckForSwarmRoomLadderSpawn(NpcListChangedEventArgs e)
+        {
+            MineShaft ms = e.Location as MineShaft;
+            if (ms != null && ms.mustKillAllMonstersToAdvance() && e.Removed != null && e.Removed.Count() > 0)
+            {
+                NPC r = e.Removed.First();
+                StardewValley.Monsters.Monster m = r as StardewValley.Monsters.Monster;
+                if (m != null && !CheckForMonstersInThisLocation(ms))
+                {
+                    Vector2 p = new Vector2(r.GetBoundingBox().Center.X, r.GetBoundingBox().Center.Y) / 64f;
+                    p.X = ((int)p.X);
+                    p.Y = ((int)p.Y);
+                    r.Name = "ignoreMe";
+                    Rectangle tileRect = new Rectangle((int)p.X * 64, (int)p.Y * 64, 64, 64);
+                    if (!ms.isTileOccupied(p, "ignoreMe") && ms.isTileOnClearAndSolidGround(p) && !Game1.player.GetBoundingBox().Intersects(tileRect) && ms.doesTileHaveProperty((int)p.X, (int)p.Y, "Type", "Back") != null && ms.doesTileHaveProperty((int)p.X, (int)p.Y, "Type", "Back").Equals("Stone"))
+                    {
+                        ms.createLadderAt(p, "hoeHit");
+                        return;
+                    }
+                    if (ms.mustKillAllMonstersToAdvance() && !CheckForMonstersInThisLocation(ms))
+                    {
+                        FieldInfo tileBeneathLadderField = typeof(StardewValley.Locations.MineShaft).GetField("netTileBeneathLadder", BindingFlags.NonPublic | BindingFlags.Instance);
+                        Netcode.NetVector2 tileBeneathLadder = (Netcode.NetVector2)tileBeneathLadderField.GetValue(ms);
+                        p = new Vector2(((int)tileBeneathLadder.X), ((int)tileBeneathLadder.Y));
+                        ms.createLadderAt(p, "newArtifact");
+                        if (ms.mustKillAllMonstersToAdvance() && Game1.player.currentLocation == ms)
+                        {
+                            Game1.showGlobalMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:MineShaft.cs.9484"));
+                        }
+                    }
+                }
+            }
         }
 
         #endregion

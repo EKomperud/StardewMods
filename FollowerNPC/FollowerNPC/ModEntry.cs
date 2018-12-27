@@ -64,13 +64,14 @@ namespace FollowerNPC
             if (!Context.IsWorldReady)
                 return;
 
-            //if (e.Button == Microsoft.Xna.Framework.Input.Keys.P.ToSButton())
-            //{
-            //    GameLocation l = Game1.getLocationFromName("HaleyHouse");
-            //    Point p = l.getWarpPointTo("HaleyHouse");
-            //    l.
-            //    Game1.warpFarmer("HaleyHouse", p.X, p.Y, 0);
-            //}
+            if (e.Button == Microsoft.Xna.Framework.Input.Keys.P.ToSButton())
+            {
+                Netcode.NetCollection<NPC> c = companionsManager.companionAStar.gameLocation.characters;
+                foreach (NPC n in c)
+                {
+                    monitor.Log(n.Name);
+                }
+            }
 
             //if (e.Button == Microsoft.Xna.Framework.Input.Keys.L.ToSButton())
             //{
