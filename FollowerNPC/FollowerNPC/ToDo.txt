@@ -14,6 +14,8 @@ No talking when monsters in room in mines			- Done! Might modify this later, but
 Gates?
 Swarm rooms	not spawning ladders					- Fixed!
 Companions can get stuck on big rocks
+Test what happens when companion is in event.
+Test what happens when companion is at a festival.
 
 Optimize A*
 Optimize helper functions
