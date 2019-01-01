@@ -87,6 +87,7 @@ namespace FollowerNPC.AI_States
 
         public override void EnterState()
         {
+            aStar.gameLocation = leader.currentLocation;
             ModEntry.modHelper.Events.World.DebrisListChanged += World_DebrisListChanged;
             ModEntry.modHelper.Events.World.ObjectListChanged += World_ObjectListChanged;
             ModEntry.modHelper.Events.World.TerrainFeatureListChanged += World_TerrainFeatureListChanged;
@@ -171,7 +172,8 @@ namespace FollowerNPC.AI_States
                 Point n = new Point(((int)currentPathNode.X * fullTile) + halfTile, ((int)currentPathNode.Y * Game1.tileSize) + halfTile);
                 Vector2 nodeDiff = new Vector2(n.X, n.Y) - new Vector2(w.X, w.Y);
                 float nodeDiffLen = nodeDiff.Length();
-                if (nodeDiffLen <= pathNodeTolerance)
+                float tolerance = pathNodeTolerance + (currentMovespeed > 5.3f ? currentMovespeed - 5.28f : 0f);
+                if (nodeDiffLen <= tolerance)
                 {
                     if (path.Count == 0)
                     {
@@ -213,8 +215,8 @@ namespace FollowerNPC.AI_States
                 me.yVelocity = -nodeDiff.Y * currentMovespeed;
                 if (me.xVelocity != 0 && me.yVelocity != 0)
                 {
-                    me.xVelocity *= 1.2645f;
-                    me.yVelocity *= 1.2645f;
+                    me.xVelocity *= 1.05f;
+                    me.yVelocity *= 1.05f;
                 }
                 HandleWallSliding();
                 lastFrameVelocity = new Vector2(me.xVelocity, me.yVelocity);

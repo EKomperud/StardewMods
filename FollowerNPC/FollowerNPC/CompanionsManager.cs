@@ -72,6 +72,8 @@ namespace FollowerNPC
         public Vector2 farmerLastTile;
         // ************** //
 
+        private float f;
+
         public CompanionsManager()
         {
             // Initialize Companion Data //
@@ -125,17 +127,19 @@ namespace FollowerNPC
 
         private void Player_Warped(object sender, WarpedEventArgs e)
         {
-            if (!Context.IsWorldReady || !(companion != null) || !(farmer != null))
+            if (!Context.IsWorldReady || !(companion != null) || !(farmer != null) || companion.currentLocation == null)
                 return;
 
-            if (!farmer.isRidingHorse())
+            if (!farmer.isRidingHorse() && farmer.currentLocation.Equals(e.NewLocation))
             {
                 Game1.warpCharacter(companion, farmer.currentLocation, farmer.getTileLocation());
                 handleCompanionLocationSpecificDialogue();
             }
             else
             {
-                DelayedWarp(null, Point.Zero, 100, new Action(handleCompanionLocationSpecificDialogue));
+                WarpButWaitForFarmer(e.NewLocation.Name, Point.Zero,
+                    new Action(handleCompanionLocationSpecificDialogue));
+                //DelayedWarp(null, Point.Zero, 100, new Action(handleCompanionLocationSpecificDialogue));
             }
         }
 
@@ -401,16 +405,17 @@ namespace FollowerNPC
                 currentCompanionVisitedLocations = new Dictionary<string, bool>();
                 Patches.companion = potentialCompanion;
                 companion.faceTowardFarmerTimer = 0;
+                cdi.recruitDialogue = new Dialogue(npcDialogueScripts[name]["Companion"], potentialCompanion);
+                potentialCompanion.CurrentDialogue.Push(cdi.recruitDialogue);
+                companionStates[name] = CompanionionshipState.recruitFollowupDialoguePushed;
             }
             // Don't recruit if the farmer didn't say 'yes' in the Recruit Dialogue
             else if (farmer.dialogueQuestionsAnswered.Contains(cdi.recruitYesID + 1))
             {
+                // Do remove the answer, but DON'T repush the dialogue
                 farmer.dialogueQuestionsAnswered.Remove(cdi.recruitYesID + 1);
             }
 
-            cdi.recruitDialogue = new Dialogue(npcDialogueScripts[name]["Companion"], potentialCompanion);
-            potentialCompanion.CurrentDialogue.Push(cdi.recruitDialogue);
-            companionStates[name] = CompanionionshipState.recruitFollowupDialoguePushed;
         }
 
         /// <summary>
@@ -423,7 +428,8 @@ namespace FollowerNPC
             if (companion != null && companion.CurrentDialogue.Count == 0 && combatWithheldDialogue.Count == 0)
             {
                 bool hbk = (bool)typeof(NPC).GetField("hasBeenKissedToday", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(companion);
-                if (farmer.spouse.Equals(companion.Name) && farmer.getFriendshipHeartLevelForNPC(companion.Name) > 9 && !hbk)
+                // check spouse for null
+                if (farmer.spouse != null && farmer.spouse.Equals(companion.Name) && farmer.getFriendshipHeartLevelForNPC(companion.Name) > 9 && !hbk)
                     return;
                 if (!companionDialogueInfos.TryGetValue(companion.Name, out CompanionDialogueInfo cdi))
                 {
@@ -469,6 +475,12 @@ namespace FollowerNPC
                 string dialogueValue;
                 if (companion.Dialogue.TryGetValue(dialogueKey, out dialogueValue))
                 {
+                    CompanionDialogueInfo cdi = companionDialogueInfos[companion.Name];
+                    farmer.dialogueQuestionsAnswered.Remove(cdi.recruitYesID);
+                    farmer.dialogueQuestionsAnswered.Remove(cdi.recruitYesID + 1);
+                    farmer.dialogueQuestionsAnswered.Remove(cdi.actionDismissID);
+                    farmer.dialogueQuestionsAnswered.Remove(cdi.actionDismissID + 1);
+
                     while (companion.CurrentDialogue.Count != 0)
                         companion.CurrentDialogue.Pop();
                     companion.CurrentDialogue.Push(companionDialogueInfos[companion.Name].automaticDismissDialogue);
@@ -511,6 +523,11 @@ namespace FollowerNPC
         /// </summary>
         private void EndOfDayDismissCompanion()
         {
+            CompanionDialogueInfo cdi = companionDialogueInfos[companion.Name];
+            farmer.dialogueQuestionsAnswered.Remove(cdi.recruitYesID);
+            farmer.dialogueQuestionsAnswered.Remove(cdi.recruitYesID + 1);
+            farmer.dialogueQuestionsAnswered.Remove(cdi.actionDismissID);
+            farmer.dialogueQuestionsAnswered.Remove(cdi.actionDismissID + 1);
             companionAI.Dispose();
             companionAI = null;
             companionBuff.RemoveAndDisposeCompanionBuff();
@@ -601,17 +618,26 @@ namespace FollowerNPC
         private CompanionDialogueInfo GenerateCompanionDialogueInfo(string name)
         {
             NPC n = Game1.getCharacterFromName(name);
-            Dialogue rd = new Dialogue(npcDialogueScripts[name]["Companion"], n);
-            Dialogue ad = new Dialogue(npcDialogueScripts[name]["CompanionActions"], n);
+            string companionRecruitScript = npcDialogueScripts[name]["Companion"];
+            string companionActionScript = npcDialogueScripts[name]["CompanionActions"];
+            Dialogue rd = new Dialogue(companionRecruitScript, n);
+            Dialogue ad = new Dialogue(companionActionScript, n);
             Dialogue autoDismiss = new Dialogue(npcDialogueScripts[name]["CompanionAutomaticDismissal"], n);
-            return new CompanionDialogueInfo()
-            {
-                recruitDialogue = rd,
-                recruitYesID = GetYesResponseID(rd),
-                actionDialogue = ad,
-                actionDismissID = GetYesResponseID(ad),
-                automaticDismissDialogue = autoDismiss
-            };
+            CompanionDialogueInfo cdi = new CompanionDialogueInfo();
+            cdi.recruitDialogue = rd;
+            cdi.recruitYesID = GetYesResponseID(rd);
+            cdi.actionDialogue = ad;
+            cdi.actionDismissID = GetYesResponseID(ad);
+            cdi.automaticDismissDialogue = autoDismiss;
+            return cdi;
+            //return new CompanionDialogueInfo()
+            //{
+            //    recruitDialogue = rd,
+            //    recruitYesID = GetYesResponseID(rd),
+            //    actionDialogue = ad,
+            //    actionDismissID = GetYesResponseID(ad),
+            //    automaticDismissDialogue = autoDismiss
+            //};
         }
 
         /// <summary>
@@ -625,7 +651,20 @@ namespace FollowerNPC
             await Task.Run(() => Timer(milliseconds));
             location = location != null ? location : farmer.currentLocation.Name;
             tileLocation = tileLocation != Point.Zero ? tileLocation : farmer.getTileLocationPoint();
-            Game1.warpCharacter(companion, location, tileLocation);
+            if (companion.currentLocation !=  null)
+                Game1.warpCharacter(companion, location, tileLocation);
+            afterWarpAction.Invoke();
+        }
+
+        private async void WarpButWaitForFarmer(String location, Point tileLocation, Action afterWarpAction)
+        {
+            await Task.Run(() => Timer(50));
+            while (farmer.currentLocation.Name != location)
+                await Task.Run(() => Timer(15));
+            location = location != null ? location : farmer.currentLocation.Name;
+            tileLocation = tileLocation != Point.Zero ? tileLocation : farmer.getTileLocationPoint();
+            //if (companion.currentLocation != null)
+                Game1.warpCharacter(companion, location, tileLocation);
             afterWarpAction.Invoke();
         }
 

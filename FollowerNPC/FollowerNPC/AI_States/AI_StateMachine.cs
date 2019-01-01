@@ -27,6 +27,8 @@ namespace FollowerNPC.AI_States
             bools = new Dictionary<string, bool>();
 
             ChangeState(eAI_State.followFarmer);
+
+            ModEntry.modHelper.Events.Player.Warped += Player_Warped;
         }
 
         public bool GetBool(string s)
@@ -43,6 +45,7 @@ namespace FollowerNPC.AI_States
 
         public void Dispose()
         {
+            ModEntry.modHelper.Events.Player.Warped -= Player_Warped;
             if (currentState != null)
                 currentState.ExitState();
             currentState = null;
@@ -55,6 +58,14 @@ namespace FollowerNPC.AI_States
                 currentState.ExitState();
             currentState = states[(int)newState];
             currentState.EnterState();
+        }
+
+        private void Player_Warped(object sender, WarpedEventArgs e)
+        {
+            if (owner.companion.currentLocation == null)
+                return;
+
+            ChangeState(eAI_State.followFarmer);
         }
 
     }
