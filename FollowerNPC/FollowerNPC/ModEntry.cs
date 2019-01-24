@@ -24,6 +24,9 @@ namespace FollowerNPC
 
         public static MethodInfo applyVelocity;
 
+        private List<FarmerSprite.AnimationFrame> fishingLeftAnim;
+        private List<FarmerSprite.AnimationFrame> fishingRightAnim;
+
         public override void Entry(IModHelper helper)
         {
             // Initialize variables //
@@ -55,6 +58,28 @@ namespace FollowerNPC
             MethodInfo updateMovementPrefix = typeof(Patches).GetMethod("Prefix", updateMovementTypes1);
             harmony.Patch(updateMovementOriginal, new HarmonyMethod(updateMovementPrefix), null);
 
+            Type[] faceTowardFarmerForPeriodTypes1 = new Type[] {typeof(NPC)};
+            MethodInfo faceTowardFarmerForPeriodOriginal = typeof(NPC).GetMethod("faceTowardFarmerForPeriod");
+            MethodInfo faceTowardFarmerForPeriodPrefix =
+                typeof(Patches).GetMethod("Prefix", faceTowardFarmerForPeriodTypes1);
+            harmony.Patch(faceTowardFarmerForPeriodOriginal, new HarmonyMethod(faceTowardFarmerForPeriodPrefix), null);
+
+            Type[] gainExperienceTypes1 = new Type[] { typeof(Farmer), typeof(int).MakeByRefType() };
+            MethodInfo gainExperienceOriginal = typeof(Farmer).GetMethod("gainExperience");
+            MethodInfo gainExperiencePrefix = typeof(Patches).GetMethod("Prefix", gainExperienceTypes1);
+            harmony.Patch(gainExperienceOriginal, new HarmonyMethod(gainExperiencePrefix), null);
+
+            fishingLeftAnim = new List<FarmerSprite.AnimationFrame>
+            {
+                new FarmerSprite.AnimationFrame(0, 4000, false, true, null, false),
+                new FarmerSprite.AnimationFrame(0, 4000, false, true, null, false)
+            };
+            fishingRightAnim = new List<FarmerSprite.AnimationFrame>
+            {
+                new FarmerSprite.AnimationFrame(20, 4000),
+                new FarmerSprite.AnimationFrame(21, 4000)
+            };
+
             applyVelocity =
                 typeof(Character).GetMethod("applyVelocity", BindingFlags.NonPublic | BindingFlags.Instance);
             //**********************//
@@ -74,12 +99,6 @@ namespace FollowerNPC
         {
             if (!Context.IsWorldReady || companionsManager == null)
                 return;
-
-            //if (e.Button == Microsoft.Xna.Framework.Input.Keys.B.ToSButton())
-            //{
-            //    foreach (GameLocation l in Game1.locations)
-            //        monitor.Log(l.Name);
-            //}
 
             //else if (e.Button == Microsoft.Xna.Framework.Input.Keys.K.ToSButton())
             //{
@@ -294,6 +313,34 @@ namespace FollowerNPC
         }
 
         #endregion
+
+        #region faceTowardFarmerForPeriod
+
+        static public bool dontFace;
+
+        static public bool Prefix(NPC __instance)
+        {
+            if (dontFace && __instance.Name.Equals(companion))
+                return false;
+            return true;
+        }
+        #endregion
+
+        #region gainExperience
+
+        static public bool increaseExperience;
+        static public string farmer;
+
+        static public void Prefix(Farmer __instance, ref int howMuch)
+        {
+            if (increaseExperience && __instance.Name.Equals(farmer))
+            {
+                int expIncrease = Math.Max((int)(howMuch * 0.05f), 1);
+                howMuch += expIncrease;
+            }
+        }
+
+        #endregion
     }
 
     /// <summary>
@@ -302,12 +349,9 @@ namespace FollowerNPC
     /// </summary>
     class DebugPatches
     {
-        private static int count;
-
-        static public void Postfix()
+        static public void Prefix(GameLocation __instance, int waterDepth)
         {
-            count++;
-            ModEntry.monitor.Log(count.ToString());
+            ModEntry.monitor.Log(waterDepth.ToString());
         }
     }
 

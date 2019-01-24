@@ -108,6 +108,8 @@ namespace FollowerNPC.AI_States
             ModEntry.modHelper.Events.World.ObjectListChanged += World_ObjectListChanged;
             ModEntry.modHelper.Events.World.TerrainFeatureListChanged += World_TerrainFeatureListChanged;
             ModEntry.modHelper.Events.Player.Warped += Player_Warped;
+
+            PathfindingRemakeCheck();
         }
 
         public override void ExitState()
@@ -148,8 +150,7 @@ namespace FollowerNPC.AI_States
 
             if (--idleTimer == 0)
             {
-                if (CheckForMonstersInThisLocation(me.currentLocation) || 
-                    !(machine.states[(int)eAI_State.idle] as AI_StateIdle).CanBeIdleHere())
+                if (CheckForMonstersInThisLocation(me.currentLocation))
                     idleTimer = -1;
                 else
                     return eAI_State.idle;
