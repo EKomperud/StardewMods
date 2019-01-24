@@ -93,8 +93,8 @@ namespace FollowerNPC.AI_States
                     break;
                 case "Maru":
                     idleBehaviors = new IdleBehavior[2];
-                    idleBehaviors[1] = new WanderBehavior(this, 9, 12, 6, 12, 12, 3.5f);
-                    idleBehaviors[2] = new LookAroundBehavior(this, 10, 12);
+                    idleBehaviors[0] = new WanderBehavior(this, 9, 12, 6, 12, 12, 3.5f);
+                    idleBehaviors[1] = new LookAroundBehavior(this, 10, 12);
                     behaviorTendencies = new float[2] { 2f, 2f };
                     break;
                 case "Penny":
@@ -1107,12 +1107,14 @@ namespace FollowerNPC.AI_States
                 animationIndexChar = (char)(i + 97);
                 idleState.me.Sprite.setCurrentAnimation(idleAnimations[i]);
                 idleState.me.Sprite.loop = idleAnimationLoops[i];
+                Patches.dontFace = true;
             }
 
             public override void StopBehavior()
             {
-                idleState.me.Sprite.CurrentAnimation.Clear();
+                idleState.me.Sprite.currentAnimation.Clear();
                 idleState.me.Sprite.faceDirectionStandard(idleState.me.FacingDirection);
+                Patches.dontFace = true;
             }
 
             public override void Update(UpdateTickedEventArgs e)

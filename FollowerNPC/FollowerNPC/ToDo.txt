@@ -23,7 +23,7 @@ Optimize helper functions
 
 Balance Companion Perks & Buffs
 Companion Buffs:
-*	Abigail:	Speed +1. Attack +10% (farmer.attackIncreaseModifier). Luck +1		Highly combat effective.
+*	Abigail:	Speed +1. Attack +10%. Luck +1										Highly combat effective.
 *	Alex:		Attack +20%. 100% Warrior Ring										Highly combat effective.
 *	Elliott:	Fishing +3															Fishes with you, catches Iridium fish occasionally?
 *	Emily:		Mining +2. 100% Yoba Ring after damage. High healing when < 40%.	Replicates "Gemologist" perk, but 100%?
@@ -31,8 +31,8 @@ Companion Buffs:
 *	Harvey:		Defense +10. Gradual healing when below 80%							Buffed healing + 1 lifeline?
 *	Leah:		Foraging +2															Forages Iridium quality items occasionally.
 *	Maru:		Increase any 1 skill by 1, interchangeable							Buffed to +2?
-	Penny:		Farming +3															Unique dialogue with children. Makes them friendlier quicker?
-	Sam:		Speed +2															+3 speed? Jukebox function.
+	Penny:		Farming +3															Unique dialogue with children. Makes them friendlier quicker? Helps with Harvesting?
+	Sam:		Speed +2															+3 speed? Jukebox function. Bard combat abilities
 *	Sebastian:	Copies Abigail.														Ride his motorcycle?
 	Shane:		Farming +3.															Chickens follow you? Alcohol buffs instead of debuffs?
 
@@ -52,7 +52,6 @@ Allow pathing over artifact spots							- Done!
 
 Combat Behavior:
 	Companions stay a little further back in mine shafts	- Done!
-	Don't target duggies when they're buried.
 	Don't target invincible bugs at all						- Testing...
 	Don't target rock crabs unless they're moving			- Testing...
 	Don't target mummies when they're downed				- Testing...
@@ -63,3 +62,4 @@ Before every release:
 	Update manifest
 	Remove debug commands
 	Test every character
+	Commit to Github

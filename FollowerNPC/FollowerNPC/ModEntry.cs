@@ -2,11 +2,9 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Threading.Tasks;
 using Harmony;
 using StardewModdingAPI;
 using StardewValley;
-using StardewValley.Menus;
 using Microsoft.Xna.Framework;
 using StardewModdingAPI.Events;
 
@@ -85,7 +83,7 @@ namespace FollowerNPC
             //**********************//
 
             // Subscribe to events //
-            Helper.Events.Input.ButtonReleased += Input_ButtonReleased;
+            //Helper.Events.Input.ButtonReleased += Input_ButtonReleased;
             //**********************//
         }
 
@@ -100,123 +98,11 @@ namespace FollowerNPC
             if (!Context.IsWorldReady || companionsManager == null)
                 return;
 
-            //else if (e.Button == Microsoft.Xna.Framework.Input.Keys.K.ToSButton())
+            //if (e.Button == SButton.K)
             //{
-            //    GameLocation gl = companionsManager.farmer.currentLocation;
-            //    foreach (Character c in gl.characters)
-            //    {
-            //        monitor.Log(c.Name);
-            //    }
-            //}
-
-            //else if (e.KeyPressed == Keys.U && spawned)
-            //{
-            //    monitor.Log(whiteBox?.currentLocation.Name + " : " + whiteBox?.getTileLocation());
-            //}
-
-            //else if (e.KeyPressed == Keys.I)
-            //{
-            //    monitor.Log(farmer?.currentLocation.Name + " : " + farmer?.getTileLocation());
+            //    companionsManager.farmer.eventsSeen.Remove(471942);
             //}
         }
-
-        //private void MenuEvents_MenuClosed(object sender, EventArgsClickableMenuClosed e)
-        //{
-        //    if (e.PriorMenu.GetType() == typeof(DialogueBox))
-        //    {
-        //        DialogueBox db = (e.PriorMenu as DialogueBox);
-
-        //        Dialogue d = (Dialogue)typeof(DialogueBox).GetField("characterDialogue", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(db);
-        //        if (d != null && d.speaker != null)
-        //        {
-        //            NPC n = d.speaker;
-
-        //            // Push Companion Ask Dialogue
-        //            if (n.CurrentDialogue.Count == 0 && npcsThatCanHangOut.TryGetValue(n.Name, out bool canHangOut) && canHangOut && !(whiteBox != null))
-        //            {
-        //                responseDialogue = new Dialogue(dialogueScripts[n.Name]["Companion"], n);
-        //                yesResponseID = GetYesResponseID(responseDialogue);
-        //                n.CurrentDialogue.Push(responseDialogue);
-        //                npcsThatCanHangOut[n.Name] = false;
-        //            }
-
-        //            // Check Companion Ask Dialogue for answer
-        //            else if (d.Equals(responseDialogue))
-        //            {
-        //                responseDialogue.speaker.CurrentDialogue.Push(new Dialogue(dialogueScripts[n.Name]["Companion"], n));
-        //                if (farmer.DialogueQuestionsAnswered.Contains(yesResponseID))
-        //                {
-        //                    farmer.DialogueQuestionsAnswered.Remove(yesResponseID);
-
-        //                    whiteBox = n;
-        //                    whiteBoxAStar = new aStar(farmer.currentLocation, whiteBox.Name);
-        //                    companionBuff = CompanionBuff.InitializeBuffFromCompanionName(whiteBox.Name, farmer);
-        //                    companionVisitedLocations = new Dictionary<string, bool>();
-        //                    Patches.companion = whiteBox;
-        //                    whiteBoxAnimationSpeed = 10f;
-        //                    whiteBoxFollow = true;
-        //                    spawned = true;
-        //                    whiteBox.faceTowardFarmerTimer = 0;
-        //                }
-        //                else if (farmer.dialogueQuestionsAnswered.Contains(yesResponseID + 1))
-        //                {
-        //                    farmer.dialogueQuestionsAnswered.Remove(yesResponseID + 1);
-        //                }
-        //                responseDialogue = null;
-        //            }
-                    
-        //            // Check Companion Actions Dialogue
-        //            else if (d.Equals(actionDialogue))
-        //            {
-        //                if (farmer.DialogueQuestionsAnswered.Contains(yesResponseID))
-        //                {
-        //                    whiteBoxFollow = false;
-        //                    spawned = false;
-        //                    farmer.DialogueQuestionsAnswered.Remove(yesResponseID);
-        //                    whiteBoxAStar = null;
-        //                    companionBuff.RemoveAndDisposeCompanionBuff();
-        //                    companionBuff = null;
-
-        //                    whiteBox.Schedule = GetWhiteBoxSchedule(Game1.dayOfMonth);
-        //                    Game1.fadeScreenToBlack();
-        //                    whiteBox.faceTowardFarmerTimer = 0;
-        //                    DelayedWarp(whiteBoxScheduleCurrentDestinationLocation,
-        //                        whiteBoxScheduleCurrentDestinationPoint, 500, new Action(CompanionEndCleanup));
-
-        //                    foreach (KeyValuePair<string, bool> npcKvP in npcsThatCanHangOut)
-        //                    {
-        //                        if (npcKvP.Value)
-        //                        {
-        //                            NPC npc = Game1.getCharacterFromName(npcKvP.Key);
-        //                            if (npc.CurrentDialogue.Count == 0)
-        //                            {
-        //                                Dialogue cRD = new Dialogue(dialogueScripts[npcKvP.Key]["Companion"], npc);
-        //                                companionRecruitDialogues[npcKvP.Key] = new RecruitDialogueInfo()
-        //                                {
-        //                                    recruitDialogue = cRD,
-        //                                    yesResponseID = GetYesResponseID(cRD)
-        //                                };
-        //                                npc.CurrentDialogue.Push(cRD);
-        //                            }
-        //                            npcsThatCanHangOut[n.Name] = false;
-        //                        }
-        //                    }
-        //                }
-        //                else if (farmer.dialogueQuestionsAnswered.Contains(yesResponseID + 1))
-        //                {
-        //                    farmer.dialogueQuestionsAnswered.Remove(yesResponseID + 1);
-        //                    whiteBox.faceTowardFarmerTimer = 0;
-        //                }
-        //            }
-
-        //            if (whiteBox != null && n.Equals(whiteBox))
-        //            {
-        //                whiteBox.faceTowardFarmerTimer = 0;
-        //                whiteBox.movementPause = 0;
-        //            }
-        //        }
-        //    }
-        //}
 
         #endregion
     }

@@ -129,8 +129,11 @@ namespace FollowerNPC.CompanionStates
 
         private void Player_Warped(object sender, WarpedEventArgs e)
         {
-            if (!Context.IsWorldReady || stateMachine.companion.currentLocation == null)
+            if (!Context.IsWorldReady)
                 return;
+
+            if (stateMachine.companion.currentLocation == null)
+                stateMachine.companion.currentLocation = Game1.getLocationFromName(stateMachine.companion.DefaultMap);
 
             Farmer f = stateMachine.manager.farmer;
             NPC c = stateMachine.companion;
