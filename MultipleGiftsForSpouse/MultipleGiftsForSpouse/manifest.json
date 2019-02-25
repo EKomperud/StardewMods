@@ -5,6 +5,6 @@
   "Description": "Spouses can be gifted multiple times per day!",
   "UniqueID": "Redwood.MultipleGiftsForSpouse",
   "EntryDll": "MultipleGiftsForSpouse.dll",
-  "MinimumApiVersion": "2.6",
-  "UpdateKeys": [ "" ]
+  "MinimumApiVersion": "2.10.2",
+  "UpdateKeys": [ "Nexus:2910 " ]
 }
