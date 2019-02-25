@@ -2,11 +2,7 @@
 {
     public class ModConfig
     {
-        public int giftLimit;
-
-        public ModConfig()
-        {
-            giftLimit = 2;
-        }
+        public int GiftLimit { get; set; } = 2;
+        
     }
 }
