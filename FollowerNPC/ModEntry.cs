@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using Harmony;
@@ -37,35 +36,36 @@ namespace FollowerNPC
             // Patch methods //
             HarmonyInstance harmony = HarmonyInstance.Create("Redwood.FollowerNPC");
 
-            Type[] isCollidingPositionTypes0 = new Type[] { typeof(Rectangle), typeof(xTile.Dimensions.Rectangle), typeof(bool), typeof(int), typeof(bool), typeof(Character), typeof(bool), typeof(bool), typeof(bool) };
-            Type[] isCollidingPositionTypes1 = new Type[] { typeof(GameLocation), typeof(Rectangle), typeof(xTile.Dimensions.Rectangle), typeof(bool), typeof(int), typeof(bool), typeof(Character), typeof(bool), typeof(bool), typeof(bool) };
-            MethodInfo isCollidingPositionOriginal = typeof(GameLocation).GetMethod("isCollidingPosition", isCollidingPositionTypes0);
-            MethodInfo isCollidingPositionprefix = typeof(Patches).GetMethod("Prefix", isCollidingPositionTypes1);
-            MethodInfo isCollidingPositionpostfix = typeof(Patches).GetMethod("Postfix", isCollidingPositionTypes1);
-            harmony.Patch(isCollidingPositionOriginal, new HarmonyMethod(isCollidingPositionprefix), new HarmonyMethod(isCollidingPositionpostfix));
+            // patch GameLocation.isCollidingPosition
+            harmony.Patch(
+                original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.isCollidingPosition), new[] { typeof(Rectangle), typeof(xTile.Dimensions.Rectangle), typeof(bool), typeof(int), typeof(bool), typeof(Character), typeof(bool), typeof(bool), typeof(bool) }),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(Patches), nameof(Patches.IsCollidingPosition_Prefix))),
+                postfix: new HarmonyMethod(AccessTools.Method(typeof(Patches), nameof(Patches.IsCollidingPosition_Postfix)))
+            );
 
-            //Type[] movePositionTypes0 = new Type[] { typeof(GameTime), typeof(Rectangle), typeof(GameLocation) };
-            //Type[] movePositionTypes1 = new Type[] { typeof(NPC), typeof(GameTime), typeof(Rectangle), typeof(GameLocation) };
-            //MethodInfo movePositionOriginal = typeof(NPC).GetMethod("MovePosition");
-            //MethodInfo movePositionPrefix = typeof(Patches).GetMethod("Prefix", movePositionTypes1);
-            //harmony.Patch(movePositionOriginal, new HarmonyMethod(movePositionPrefix), null);
+            // patch NPC.MovePosition
+            //harmony.Patch(
+            //    original: AccessTools.Method(typeof(NPC), nameof(NPC.MovePosition)),
+            //    prefix: new HarmonyMethod(AccessTools.Method(typeof(Patches), nameof(Patches.MovePosition_Prefix)))
+            //);
 
-            Type[] updateMovementTypes0 = new Type[] { typeof(GameLocation), typeof(GameTime) };
-            Type[] updateMovementTypes1 = new Type[] { typeof(NPC), typeof(GameLocation), typeof(GameTime) };
-            MethodInfo updateMovementOriginal = typeof(NPC).GetMethod("updateMovement");
-            MethodInfo updateMovementPrefix = typeof(Patches).GetMethod("Prefix", updateMovementTypes1);
-            harmony.Patch(updateMovementOriginal, new HarmonyMethod(updateMovementPrefix), null);
+            // patch NPC.updateMovement
+            harmony.Patch(
+                original: AccessTools.Method(typeof(NPC), nameof(NPC.updateMovement)),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(Patches), nameof(Patches.UpdateMovement_Prefix)))
+            );
 
-            Type[] faceTowardFarmerForPeriodTypes1 = new Type[] {typeof(NPC)};
-            MethodInfo faceTowardFarmerForPeriodOriginal = typeof(NPC).GetMethod("faceTowardFarmerForPeriod");
-            MethodInfo faceTowardFarmerForPeriodPrefix =
-                typeof(Patches).GetMethod("Prefix", faceTowardFarmerForPeriodTypes1);
-            harmony.Patch(faceTowardFarmerForPeriodOriginal, new HarmonyMethod(faceTowardFarmerForPeriodPrefix), null);
+            // patch NPC.faceTowardFarmerForPeriod
+            harmony.Patch(
+                original: AccessTools.Method(typeof(NPC), nameof(NPC.faceTowardFarmerForPeriod)),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(Patches), nameof(Patches.FaceTowardFarmerForPeriod_Prefix)))
+            );
 
-            Type[] gainExperienceTypes1 = new Type[] { typeof(Farmer), typeof(int).MakeByRefType() };
-            MethodInfo gainExperienceOriginal = typeof(Farmer).GetMethod("gainExperience");
-            MethodInfo gainExperiencePrefix = typeof(Patches).GetMethod("Prefix", gainExperienceTypes1);
-            harmony.Patch(gainExperienceOriginal, new HarmonyMethod(gainExperiencePrefix), null);
+            // patch Farmer.gainExperience
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Farmer), nameof(Farmer.gainExperience)),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(Patches), nameof(Patches.GainExperience_Prefix)))
+            );
 
             fishingLeftAnim = new List<FarmerSprite.AnimationFrame>
             {
@@ -78,8 +78,7 @@ namespace FollowerNPC
                 new FarmerSprite.AnimationFrame(21, 4000)
             };
 
-            applyVelocity =
-                typeof(Character).GetMethod("applyVelocity", BindingFlags.NonPublic | BindingFlags.Instance);
+            applyVelocity = typeof(Character).GetMethod("applyVelocity", BindingFlags.NonPublic | BindingFlags.Instance);
             //**********************//
 
             // Subscribe to events //
@@ -125,7 +124,7 @@ namespace FollowerNPC
         static public string bypass = "NPC";
         static public string name;
 
-        static public void Prefix(GameLocation __instance, Rectangle position, xTile.Dimensions.Rectangle viewport, bool isFarmer, int damagesFarmer, bool glider, Character character, bool pathfinding, bool projectile = false, bool ignoreCharacterRequirement = false)
+        static public void IsCollidingPosition_Prefix(GameLocation __instance, Rectangle position, xTile.Dimensions.Rectangle viewport, bool isFarmer, int damagesFarmer, bool glider, Character character, bool pathfinding, bool projectile = false, bool ignoreCharacterRequirement = false)
         {
             if (companion != null
                 && character != null
@@ -139,7 +138,7 @@ namespace FollowerNPC
             }
         }
 
-        static public void Postfix(GameLocation __instance, Rectangle position, xTile.Dimensions.Rectangle viewport, bool isFarmer, int damagesFarmer, bool glider, Character character, bool pathfinding, bool projectile = false, bool ignoreCharacterRequirement = false)
+        static public void IsCollidingPosition_Postfix(GameLocation __instance, Rectangle position, xTile.Dimensions.Rectangle viewport, bool isFarmer, int damagesFarmer, bool glider, Character character, bool pathfinding, bool projectile = false, bool ignoreCharacterRequirement = false)
         {
             if (flag)
             {
@@ -158,7 +157,7 @@ namespace FollowerNPC
         #region checkSchedule
         static public Point scheduleCurrentDestination;
 
-        static public void Postfix(NPC __instance, int timeOfDay)
+        static public void CheckSchedule_Postfix(NPC __instance, int timeOfDay)
         {
             if (companion != null && companion == __instance.Name)
             {
@@ -177,13 +176,13 @@ namespace FollowerNPC
         /// while they are the farmer's companion.
         /// </summary>
         #region movePosition
-        
-        static public bool Prefix(NPC __instance, GameTime time, Rectangle viewport, GameLocation currentLocation)
+
+        static public bool MovePosition_Prefix(NPC __instance, GameTime time, Rectangle viewport, GameLocation currentLocation)
         {
             bool dontSkip = (companion == null) || !__instance.Name.Equals(companion);
             if (!dontSkip)
             {
-                object[] parameters = new object[] {__instance.currentLocation};
+                object[] parameters = new object[] { __instance.currentLocation };
                 ModEntry.applyVelocity.Invoke(__instance, parameters);
             }
             return dontSkip;
@@ -192,7 +191,7 @@ namespace FollowerNPC
 
         #region updateMovement
 
-        static public bool Prefix(NPC __instance, GameLocation location, GameTime time)
+        static public bool UpdateMovement_Prefix(NPC __instance, GameLocation location, GameTime time)
         {
             bool dontSkip = (companion == null) || !__instance.Name.Equals(companion);
             return dontSkip;
@@ -204,7 +203,7 @@ namespace FollowerNPC
 
         static public bool dontFace;
 
-        static public bool Prefix(NPC __instance)
+        static public bool FaceTowardFarmerForPeriod_Prefix(NPC __instance)
         {
             if (dontFace && __instance.Name.Equals(companion))
                 return false;
@@ -217,7 +216,7 @@ namespace FollowerNPC
         static public bool increaseExperience;
         static public string farmer;
 
-        static public void Prefix(Farmer __instance, ref int howMuch)
+        static public void GainExperience_Prefix(Farmer __instance, ref int howMuch)
         {
             if (increaseExperience && __instance.Name.Equals(farmer))
             {
