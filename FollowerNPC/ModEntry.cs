@@ -30,7 +30,8 @@ namespace FollowerNPC
             config = Helper.ReadConfig<ModConfig>();
             monitor = Monitor;
             modHelper = helper;
-            companionsManager = new CompanionsManager();
+            helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+
             //**********************//
 
             // Patch methods //
@@ -86,6 +87,13 @@ namespace FollowerNPC
             //**********************//
         }
 
+        /// <summary>Raised after the game is launched, right before the first update tick. This happens once per game session (unrelated to loading saves). All mods are loaded and initialised at this point, so this is a good time to set up mod integrations.</summary>
+        /// <param name="sender">The event sender.</param>
+        /// <param name="e">The event data.</param>
+        private void OnGameLaunched(object sender, GameLaunchedEventArgs e)
+        {
+            companionsManager = new CompanionsManager();
+        }
 
         #endregion
 
